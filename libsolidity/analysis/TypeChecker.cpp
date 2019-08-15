@@ -1485,14 +1485,29 @@ TypePointer TypeChecker::typeCheckTypeConversionAndRetrieveReturnType(
 				);
 			}
 			else
+			{
+				SecondarySourceLocation ssl;
+				if (
+					auto const* functionType = dynamic_cast<FunctionType const*>(argType);
+					functionType &&
+					functionType->kind() == FunctionType::Kind::External &&
+					resultType->category() == Type::Category::Address
+				)
+					ssl.append(
+						"Did you mean to obtain the address of the contract of the function using \"" +
+						_functionCall.arguments().front()->location().text() +
+						".address\"?",
+						_functionCall.arguments().front()->location()
+					);
 				m_errorReporter.typeError(
-					_functionCall.location(),
+					_functionCall.location(), ssl,
 					"Explicit type conversion not allowed from \"" +
 					argType->toString() +
 					"\" to \"" +
 					resultType->toString() +
 					"\"."
 				);
+			}
 		}
 		if (resultType->category() == Type::Category::Address)
 		{
